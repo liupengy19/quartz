@@ -2,6 +2,7 @@
 
 #include <chrono>
 #include <iostream>
+#include <set>
 #include <thread>
 #include <vector>
 
@@ -19,11 +20,11 @@ int test() {
   }
   circ.layerize();
   int num_layers = circ.get_depth();
-  std::vector<int> layer_indices = circ.applicable_qubit_index();
+  std::set<int> layer_indices = circ.applicable_qubit_index();
   std::cout << "num_layers: " << num_layers << std::endl;
   std::cout << "layer_indices: ";
-  for (std::vector<int>::size_type i = 0; i < layer_indices.size(); i++) {
-    std::cout << layer_indices[i] << " ";
+  for (auto i : layer_indices) {
+    std::cout << i << " ";
   }
 
   return 0;

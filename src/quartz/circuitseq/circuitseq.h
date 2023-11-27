@@ -8,6 +8,7 @@
 
 #include <functional>
 #include <istream>
+#include <set>
 #include <string>
 #include <unordered_set>
 

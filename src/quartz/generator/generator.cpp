@@ -291,7 +291,7 @@ void Generator::bfs(const std::vector<std::vector<CircuitSeq *>> &dags,
   }
 }
 void Generator::generate_layer(
-    int num_qubits, int num_input_parameters, int max_num_quantum_gates,
+    int num_qubits, int num_input_parameters, int max_depth,
     int max_num_param_gates, Dataset *dataset, bool invoke_python_verifier,
     EquivalenceSet *equiv_set, bool unique_parameters, bool verbose,
     decltype(std::chrono::steady_clock::now() -
@@ -320,11 +320,11 @@ void Generator::generate_layer(
   // clear().
   std::vector<std::unique_ptr<CircuitSeq>> dag_holder;
 
-  for (int num_gates = 1; num_gates <= max_num_quantum_gates; num_gates++) {
+  for (int depth = 1; depth <= max_depth; depth++) {
     if (verbose) {
       std::cout << "BFS: " << dags_to_search.size()
-                << " representative DAGs to search with " << num_gates - 1
-                << " gates." << std::endl;
+                << " representative DAGs to search with " << depth - 1
+                << " depth." << std::endl;
     }
     if (!invoke_python_verifier) {
       assert(dataset);
@@ -340,7 +340,7 @@ void Generator::generate_layer(
       // Do not verify when |num_gates == max_num_quantum_gates|.
       // This is to make the behavior the same when
       // |invoke_python_verifier| is true or false.
-      if (num_gates == max_num_quantum_gates) {
+      if (depth == max_depth) {
         break;
       }
       bool ret = dataset->save_json(context, "tmp_before_verify.json");
@@ -429,150 +429,80 @@ void Generator::bfs_layer(const std::vector<std::vector<CircuitSeq *>> &dags,
   };
   for (auto &old_dag : dags.back()) {
     // Create a new CircuitSeq to avoid editing the old one.
-    auto new_dag = std::make_unique<CircuitSeq>(*old_dag);
-    auto dag = new_dag.get();
-    InputParamMaskType input_param_usage_mask;
-    std::vector<InputParamMaskType> input_param_masks;
-    if (unique_parameters) {
-      std::tie(input_param_usage_mask, input_param_masks) =
-          dag->get_input_param_mask();
-    }
-    std::vector<bool> last_gate_used_qubit_index(dag->get_num_qubits(), false);
-    int last_gate_min_qubit_index = -1;
-    if (dag->get_num_gates() > 0) {
-      last_gate_min_qubit_index = dag->gates.back()->get_min_qubit_index();
-      for (auto &input_node : dag->gates.back()->input_wires) {
-        if (input_node->is_qubit()) {
-          last_gate_used_qubit_index[input_node->index] = true;
-        }
-      }
-    }
-    std::vector<int> qubit_indices, parameter_indices;
-    Gate *gate;
-
-    // auto search_parameters =
-    //     [&dag, &gate, &qubit_indices, &parameter_indices,
-    //     &try_to_add_to_result,
-    //      &unique_parameters, &input_param_masks](int
-    //      num_remaining_parameters,
-    //                                              const InputParamMaskType
-    //                                                  &current_usage_mask,
-    //                                              auto &search_parameters_ref
-    //                                              /*feed in the lambda
-    //                                              implementation to itself as
-    //                                              a parameter*/) {
-    //       if (num_remaining_parameters == 0) {
-    //         bool ret =
-    //             dag->add_gate(qubit_indices, parameter_indices, gate,
-    //             nullptr);
-    //         assert(ret);
-    //         try_to_add_to_result(dag);
-    //         ret = dag->remove_last_gate();
-    //         assert(ret);
-    //         if (gate->get_num_qubits() > 1 && !gate->is_symmetric()) {
-    //           while (std::next_permutation(qubit_indices.begin(),
-    //                                        qubit_indices.end())) {
-    //             ret = dag->add_gate(qubit_indices, parameter_indices, gate,
-    //                                 nullptr);
-    //             assert(ret);
-    //             try_to_add_to_result(dag);
-    //             ret = dag->remove_last_gate();
-    //             assert(ret);
-    //           }
-    //         }
-    //         return;
-    //       }
-
-    //       for (int p1 = 0; p1 < dag->get_num_total_parameters(); p1++) {
-    //         if (unique_parameters) {
-    //           if (current_usage_mask & input_param_masks[p1]) {
-    //             // p1 contains an already used input parameter.
-    //             continue;
-    //           }
-    //           parameter_indices.push_back(p1);
-    //           search_parameters_ref(num_remaining_parameters - 1,
-    //                                 current_usage_mask |
-    //                                 input_param_masks[p1],
-    //                                 search_parameters_ref);
-    //           parameter_indices.pop_back();
-    //         } else {
-    //           parameter_indices.push_back(p1);
-    //           search_parameters_ref(num_remaining_parameters - 1,
-    //                                 /*unused*/ 0, search_parameters_ref);
-    //           parameter_indices.pop_back();
-    //         }
-    //       }
-    //     };
-
-    // Add 1 quantum gate according to the qubit index order.
-    auto append_layer = [&](std::vector<quartz::Gate> *gates,
-                            std::vector<std::vector<int>> *gate_indices) {
-      for (int i = 0; i < gates->size(); i++) {
-        quartz::Gate gate = (*gates)[i];
-        std::vector<int> gate_index = (*gate_indices)[i];
+    // auto new_dag = std::make_unique<CircuitSeq>(*old_dag);
+    // auto dag = new_dag.get();
+    auto append_layer = [&](std::vector<quartz::Gate> &gates,
+                            std::vector<std::vector<int>> &gate_indices) {
+      auto new_dag = std::make_unique<CircuitSeq>(*old_dag);
+      auto dag = new_dag.get();
+      for (int i = 0; i < gates.size(); i++) {
+        auto gate = gates[i];
+        auto gate_index = gate_indices[i];
         std::vector<int> empty_param_list;
         bool ret = dag->add_gate(gate_index, empty_param_list, &gate, nullptr);
         assert(ret);
       }
       try_to_add_to_result(dag);
     };
-    std::set<int> applicable_qubit_indices = (*dag).applicable_qubit_index();
+    std::set<int> applicable_qubit_indices =
+        (*old_dag).applicable_qubit_index();
     std::set<int> remaining_qubit_indices;
-    for (int i = 0; i < dag->get_num_qubits(); i++) {
+    for (int i = 0; i < old_dag->get_num_qubits(); i++) {
       remaining_qubit_indices.insert(i);
     }
     std::vector<quartz::Gate> gates;
     std::vector<std::vector<int>> gate_indices;
     int max_qubit_per_gate = supported_quantum_gates_.size() - 1;
     auto recursively_add = [&](std::set<int> &remaining_qubit_indices,
-                               std::set<int> &remaining_applicable_indices,
                                std::vector<quartz::Gate> &gates,
                                std::vector<std::vector<int>> &gate_indices,
-                               auto &recursively_add_ref) {
+                               auto &recursively_add_ref) -> void {
       // choose gate first, then choose location, the gate must act on the
       // first applicable qubit
 
-      for (int gate_per_qubit = 1; gate_per_qubit <= max_qubit_per_gate;
-           gate_per_qubit += 1) {
-        for (const auto &idx : supported_quantum_gates_[gate_per_qubit]) {
-          std::set<int> copied_set = remaining_applicable_indices;
-          gate = context->get_gate(idx);
-          gates.push_back(*gate);
+      for (int first_qubit_idx : applicable_qubit_indices) {
+        if (remaining_qubit_indices.find(first_qubit_idx) ==
+            remaining_qubit_indices.end()) {
+          continue;
+        }
 
-          for (int first_qubit_idx : copied_set) {
-            remaining_applicable_indices.erase(first_qubit_idx);
-            remaining_qubit_indices.erase(first_qubit_idx);
+        // don't add any gate here
+        remaining_qubit_indices.erase(first_qubit_idx);
+        recursively_add_ref(remaining_qubit_indices, gates, gate_indices,
+                            recursively_add_ref);
+        // add some gate to this position
+
+        for (int gate_per_qubit = 1; gate_per_qubit <= max_qubit_per_gate;
+             gate_per_qubit += 1) {
+          for (const auto &idx : supported_quantum_gates_[gate_per_qubit]) {
+            auto gate = context->get_gate(idx);
+            gates.push_back(*gate);
+
             // select all permutation of gate_per_qubit-1 more qubits
             auto all_combinations =
                 get_combinations(remaining_qubit_indices, gate_per_qubit - 1);
             for (const auto &combination : all_combinations) {
-              std::vector<int> qubit_indices;
-              qubit_indices.push_back(first_qubit_idx);
-              gate_indices.push_back(std::vector<int>{});
+              gate_indices.push_back({first_qubit_idx});
               for (int idx_in_combination : combination) {
-                remaining_applicable_indices.erase(idx_in_combination);
                 remaining_qubit_indices.erase(idx_in_combination);
                 gate_indices.back().push_back(idx_in_combination);
               }
-              append_layer(&gates, &gate_indices);
-              recursively_add_ref(remaining_qubit_indices,
-                                  remaining_applicable_indices, gates,
-                                  gate_indices, recursively_add_ref);
+              append_layer(gates, gate_indices);
+              recursively_add_ref(remaining_qubit_indices, gates, gate_indices,
+                                  recursively_add_ref);
               gate_indices.pop_back();
               for (int idx_in_combination : combination) {
-                remaining_applicable_indices.insert(idx_in_combination);
                 remaining_qubit_indices.insert(idx_in_combination);
               }
             }
-            remaining_applicable_indices.insert(first_qubit_idx);
-            remaining_qubit_indices.insert(first_qubit_idx);
+            gates.pop_back();
           }
-          gates.pop_back();
         }
+        remaining_qubit_indices.insert(first_qubit_idx);
       }
     };
-    recursively_add(remaining_qubit_indices, applicable_qubit_indices, gates,
-                    gate_indices, recursively_add);
+    recursively_add(remaining_qubit_indices, gates, gate_indices,
+                    recursively_add);
   }
 }
 void Generator::findCombinations(std::set<int>::iterator it,

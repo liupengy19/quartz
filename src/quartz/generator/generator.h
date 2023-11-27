@@ -71,12 +71,10 @@ class Generator {
                  std::vector<CircuitSeq *> *new_representatives,
                  bool invoke_python_verifier, const EquivalenceSet *equiv_set,
                  bool unique_parameters);
-  std::vector<std::vector<int>> Generator::get_combinations(std::set<int> &s,
-                                                            int n);
-  void Generator::findCombinations(std::set<int>::iterator it,
-                                   std::set<int>::iterator end, int n,
-                                   std::vector<int> &combination,
-                                   std::vector<std::vector<int>> &result);
+  std::vector<std::vector<int>> get_combinations(std::set<int> &s, int n);
+  void findCombinations(std::set<int>::iterator it, std::set<int>::iterator end,
+                        int n, std::vector<int> &combination,
+                        std::vector<std::vector<int>> &result);
   Context *context;
   // |supported_quantum_gates_[i]|: supported quantum gates with |i| qubits.
   std::vector<std::vector<GateType>> supported_quantum_gates_;
