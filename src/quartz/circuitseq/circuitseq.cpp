@@ -1704,5 +1704,47 @@ bool CircuitSeq::same_gate(CircuitGate *gate1, CircuitGate *gate2) {
   }
   return true;
 }
+int CircuitSeq::get_depth() {
+  int max_layer = 0;
+  for (auto &layer : n_layer_per_index) {
+    max_layer = std::max(max_layer, layer);
+  }
+  return max_layer;
+}
+// return the number of layers, which is the depth
+int CircuitSeq::layerize() {
+  n_layer_per_index = std::vector<int>(num_qubits, 0);
 
+  for (auto &gate : gates) {
+    std::cout << gate->to_string() << std::endl;
+    int max_layer = 0;
+    for (auto &wire : gate->input_wires) {
+      if (wire->is_qubit()) {
+        max_layer = std::max(max_layer, n_layer_per_index[wire->index]);
+      }
+    }
+    for (auto &wire : gate->input_wires) {
+      if (wire->is_qubit()) {
+        n_layer_per_index[wire->index] = max_layer + 1;
+      }
+    }
+  }
+  int max_layer = 0;
+  for (auto &layer : n_layer_per_index) {
+    max_layer = std::max(max_layer, layer);
+  }
+
+  return max_layer;
+}
+
+std::set<int> CircuitSeq::applicable_qubit_index() {
+  int max_layer = get_depth();
+  std::set<int> result;
+  for (int i = 0; i < get_num_qubits(); i++) {
+    if (n_layer_per_index[i] == max_layer) {
+      result.insert(i);
+    }
+  }
+  return result;
+}
 }  // namespace quartz

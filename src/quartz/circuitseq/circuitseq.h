@@ -216,6 +216,10 @@ class CircuitSeq {
                         const CircuitSeq &seq2, int index2);
 
   static bool same_gate(CircuitGate *gate1, CircuitGate *gate2);
+  int get_depth();
+  // return the number of layers, which is the depth
+  int layerize();
+  std::set<int> applicable_qubit_index();
 
  private:
   void clone_from(const CircuitSeq &other,
@@ -273,6 +277,7 @@ class CircuitSeq {
       other_hash_values_;
   ComplexType original_fingerprint_;
   bool hash_value_valid_;
+  std::vector<int> n_layer_per_index;
 };
 
 class UniquePtrCircuitSeqComparator {

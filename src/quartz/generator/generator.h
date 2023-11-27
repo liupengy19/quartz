@@ -48,6 +48,13 @@ class Generator {
       decltype(std::chrono::steady_clock::now() -
                std::chrono::steady_clock::now()) *record_verification_time =
           nullptr);
+  void generate_layer(
+      int num_qubits, int num_input_parameters, int max_num_quantum_gates,
+      int max_num_param_gates, Dataset *dataset, bool invoke_python_verifier,
+      EquivalenceSet *equiv_set, bool unique_parameters, bool verbose = false,
+      decltype(std::chrono::steady_clock::now() -
+               std::chrono::steady_clock::now()) *record_verification_time =
+          nullptr);
 
  private:
   void initialize_supported_quantum_gates();
@@ -59,7 +66,17 @@ class Generator {
            std::vector<CircuitSeq *> *new_representatives,
            bool invoke_python_verifier, const EquivalenceSet *equiv_set,
            bool unique_parameters);
-
+  void bfs_layer(const std::vector<std::vector<CircuitSeq *>> &dags,
+                 int max_num_param_gates, Dataset &dataset,
+                 std::vector<CircuitSeq *> *new_representatives,
+                 bool invoke_python_verifier, const EquivalenceSet *equiv_set,
+                 bool unique_parameters);
+  std::vector<std::vector<int>> Generator::get_combinations(std::set<int> &s,
+                                                            int n);
+  void Generator::findCombinations(std::set<int>::iterator it,
+                                   std::set<int>::iterator end, int n,
+                                   std::vector<int> &combination,
+                                   std::vector<std::vector<int>> &result);
   Context *context;
   // |supported_quantum_gates_[i]|: supported quantum gates with |i| qubits.
   std::vector<std::vector<GateType>> supported_quantum_gates_;
