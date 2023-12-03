@@ -38,8 +38,8 @@ int main() {
   // gen_ecc_set({GateType::t, GateType::tdg, GateType::h, GateType::x,
   //              GateType::cx, GateType::add},
   //             "3_2_5_", true, true, 3, 0, 5);
-  gen_ecc_set_depth({GateType::t, GateType::tdg, GateType::h, GateType::x,
-                     GateType::cx, GateType::add},
-                    "3_2_5_", true, true, 3, 0, 2, 1);
+  gen_ecc_set_depth(
+      {GateType::t, GateType::tdg, GateType::h, GateType::x, GateType::cx},
+      "3_0_3_", true, true, 3, 0, 3, 1);
   return 0;
 }

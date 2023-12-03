@@ -1738,6 +1738,7 @@ int CircuitSeq::layerize() {
 }
 
 std::set<int> CircuitSeq::applicable_qubit_index() {
+  layerize();
   int max_layer = get_depth();
   std::set<int> result;
   for (int i = 0; i < get_num_qubits(); i++) {
