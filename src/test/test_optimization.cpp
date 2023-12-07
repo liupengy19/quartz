@@ -22,6 +22,5 @@ int main(int argc, char **argv) {
                GateType::x});
   //   test_optimization(&ctx, "circuit/example-circuits/voqc_fig5.qasm",
   //                     "cmake-build-debug/bfs_verified.json");
-  test_optimization(&ctx, circuit_filename, ecc_filename,
-                    false /*use_simulated_annealing*/);
+  test_optimization(&ctx, circuit_filename, ecc_filename);
 }

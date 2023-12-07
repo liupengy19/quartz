@@ -12,8 +12,7 @@
 using namespace quartz;
 
 void test_optimization(Context *ctx, const std::string &file_name,
-                       const std::string &equivalent_file_name,
-                       bool use_simulated_annealing) {
+                       const std::string &equivalent_file_name) {
   QASMParser qasm_parser(ctx);
   CircuitSeq *dag = nullptr;
   if (!qasm_parser.load_qasm(file_name, dag)) {
