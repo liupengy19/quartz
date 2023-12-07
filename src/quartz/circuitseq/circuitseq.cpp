@@ -1716,7 +1716,6 @@ int CircuitSeq::layerize() {
   n_layer_per_index = std::vector<int>(num_qubits, 0);
 
   for (auto &gate : gates) {
-    std::cout << gate->to_string() << std::endl;
     int max_layer = 0;
     for (auto &wire : gate->input_wires) {
       if (wire->is_qubit()) {
