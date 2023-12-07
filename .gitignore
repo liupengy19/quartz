@@ -47,6 +47,7 @@ Makefile
 
 # Dataset
 *.json
+!data/*.json
 
 # Cython
 python/quartz/_cython/*.cpp
