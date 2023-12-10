@@ -12,7 +12,8 @@
 using namespace quartz;
 
 void test_optimization(Context *ctx, const std::string &file_name,
-                       const std::string &equivalent_file_name) {
+                       const std::string &equivalent_file_name,
+                       int timeout = 3600) {
   QASMParser qasm_parser(ctx);
   CircuitSeq *dag = nullptr;
   if (!qasm_parser.load_qasm(file_name, dag)) {
@@ -29,7 +30,7 @@ void test_optimization(Context *ctx, const std::string &file_name,
   auto start = std::chrono::steady_clock::now();
   auto new_graph =
       graph.optimize(ctx, equivalent_file_name, file_name, /*print_message=*/
-                     true);
+                     true, nullptr, -1, timeout);
   auto end = std::chrono::steady_clock::now();
   std::cout << "After optimizing graph in "
             << (double)std::chrono::duration_cast<std::chrono::milliseconds>(
