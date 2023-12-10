@@ -517,14 +517,17 @@ std::shared_ptr<Graph> Graph::context_shift(Context *src_ctx, Context *dst_ctx,
 }
 
 float Graph::total_cost(void) const {
-  // Uncomment to use circuit depth as the cost
-  // return circuit_depth();
+  
+  return circuit_depth();
+  // Uncomment to use gate count as cost
+  /*
   size_t cnt = 0;
   for (const auto &it : inEdges) {
     if (it.first.ptr->is_quantum_gate())
       cnt++;
   }
   return (float)cnt;
+  */
 }
 
 int Graph::gate_count() const {
