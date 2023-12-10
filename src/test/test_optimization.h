@@ -41,3 +41,33 @@ void test_optimization(Context *ctx, const std::string &file_name,
             << "total gate count becomes " << new_graph->total_cost() << "."
             << std::endl;
 }
+
+/* Optimize circuit and pass initial depth, final depth, and runtime
+    back to caller.
+*/
+void test_benchmark(Context *ctx, const std::string &file_name,
+                       const std::string &equivalent_file_name,
+                       float& initial_depth, float& final_depth, double& runtime) {
+  QASMParser qasm_parser(ctx);
+  CircuitSeq *dag = nullptr;
+  if (!qasm_parser.load_qasm(file_name, dag)) {
+    std::cerr << "Parser failed" << std::endl;
+    return;
+  }
+  
+  quartz::Graph graph(ctx, dag);
+  initial_depth = graph.total_cost();
+  
+  auto start = std::chrono::steady_clock::now();
+  auto new_graph =
+      graph.optimize(ctx, equivalent_file_name, file_name, /*print_message=*/
+                     true);
+  auto end = std::chrono::steady_clock::now();
+
+  final_depth = new_graph->total_cost();
+  runtime = (double)std::chrono::duration_cast<std::chrono::milliseconds>(
+                   end - start)
+                       .count() /
+                   1000.0;
+
+}
