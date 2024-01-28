@@ -35,8 +35,7 @@ int main() {
   //         GateType::add}, file_prefix, true, q, 2, n);
   //   }
   // }
-  gen_ecc_set({GateType::t, GateType::tdg, GateType::h, GateType::x,
-               GateType::cx, GateType::add},
-              "3_2_5_", true, true, 3, 0, 5);
+  gen_ecc_set({GateType::h, GateType::x, GateType::cx}, "3_0_5_", true, true, 3,
+              0, 5);
   return 0;
 }

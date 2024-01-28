@@ -4,25 +4,17 @@
 
 using namespace quartz;
 
-int main() {
-  Context ctx({GateType::input_qubit, GateType::input_param, GateType::cx,
-               GateType::h, GateType::rz, GateType::x, GateType::add});
+int main(int argc, char **argv) {
+  Context ctx({GateType::input_qubit, GateType::cx, GateType::h, GateType::x});
 
-  auto graph = Graph::from_qasm_file(
-      &ctx, "experiment/circs/nam_circs/barenco_tof_3.qasm");
+  auto graph = Graph::from_qasm_file(&ctx, argv[1]);
   assert(graph);
 
   EquivalenceSet eqs;
   // Load ECC set from file
-  if (!eqs.load_json(&ctx, "Nam_3_3_complete_ECC_set.json")) {
+  if (!eqs.load_json(&ctx, "./ecc.json")) {
     // generate ECC set
-    gen_ecc_set(
-        {GateType::rz, GateType::h, GateType::cx, GateType::x, GateType::add},
-        "Nam_3_3_", true, false, 3, 2, 3);
-    if (!eqs.load_json(&ctx, "Nam_3_3_complete_ECC_set.json")) {
-      std::cout << "Failed to load equivalence file." << std::endl;
-      assert(false);
-    }
+    assert(false);
   }
 
   // Get xfer from the equivalent set
@@ -40,8 +32,10 @@ int main() {
       }
     }
   }
-  std::cout << "number of xfers: " << xfers.size() << std::endl;
+  // std::cout << "number of xfers: " << xfers.size() << std::endl;
 
-  graph->optimize(xfers, graph->gate_count() * 1.05, "barenco_tof_3", "", true);
+  auto newgraph = graph->optimize(xfers, graph->gate_count() * 1.05,
+                                  "barenco_tof_3", "", false);
+  newgraph->to_qasm("", false, false);
   return 0;
 }

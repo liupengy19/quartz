@@ -1265,8 +1265,12 @@ void Graph::print_qubit_ops() {
 
 void Graph::to_qasm(const std::string &save_filename, bool print_result,
                     bool print_guid) const {
-  std::ofstream ofs(save_filename);
-  ofs << to_qasm(print_result, print_guid);
+  if (save_filename.empty()) {
+    std::cout << to_qasm(print_result, print_guid);
+  } else {
+    std::ofstream ofs(save_filename);
+    ofs << to_qasm(print_result, print_guid);
+  }
 }
 
 std::string Graph::to_qasm(bool print_result, bool print_guid) const {
@@ -2005,6 +2009,7 @@ Graph::optimize(const std::vector<GraphXfer *> &xfers, double cost_upper_bound,
                 const std::string &circuit_name,
                 const std::string &log_file_name, bool print_message,
                 std::function<float(Graph *)> cost_function, int timeout) {
+  timeout = 1;
   if (cost_function == nullptr) {
     cost_function = [](Graph *graph) { return graph->total_cost(); };
   }
